@@ -125,13 +125,12 @@
     var tel = p.phone ? '<a class="ltr" href="tel:' + esc(p.phone.replace(/[^+\d]/g, '')) + '">' + esc(p.phone) + '</a>' : '<span class="t">' + esc(t('no_info')) + '</span>';
     h += row('address', '<span class="t">' + (p.addr ? esc(p.addr) : esc(t('no_info'))) + '</span>') + row('phone', tel);
     if (p.web) h += row('website', '<a class="ltr" target="_blank" rel="noopener" href="' + esc(/^https?:/.test(p.web) ? p.web : 'https://' + p.web) + '">' + esc(p.web.replace(/^https?:\/\//, '')) + '</a>');
-    if (v) h += '<div class="hint2 t">' + esc(t('last_save')) + ': ' + esc((v.rep || '—') + ' · ' + fmt(v.updated_at, true)) + '</div>';
+    if (v) h += '<div class="hint2 t">' + esc(t('last_save')) + ': ' + esc(fmt(v.updated_at, true)) + '</div>';
     h += '<div class="acts"><button class="btn gold t" id="b-dir">🧭 ' + esc(t('directions')) + '</button>' + (p.phone ? '<button class="btn navy t" id="b-call">📞 ' + esc(t('call')) + '</button>' : '') + '</div>';
     h += '<div class="acts"><button class="btn line t" id="b-gph">🖼️ ' + esc(t('google_photos')) + '</button></div>';
     h += '<h4 class="t">' + esc(t('visit_title')) + '</h4><div class="stbtns">' + ['done', 'pending', 'refused', 'none'].map(function (s) { return '<button class="stb' + (st === s ? ' on' : '') + '" data-s="' + s + '"><span class="ic2">' + (s === 'none' ? '↩️' : STI[s]) + '</span>' + esc(t(s === 'none' ? 'btn_none' : 'st_' + s)) + '</button>'; }).join('') + '</div>';
-    var showForm = !!v; var rep = (v && v.rep) || localStorage.getItem('mzk_rep') || '';
+    var showForm = !!v;
     h += '<div id="vform" class="form"' + (showForm ? '' : ' hidden') + '><h4 class="t">' + esc(t('details')) + '</h4>' +
-      '<label>' + esc(t('rep')) + '</label><input type="text" id="f-rep" value="' + esc(rep) + '">' +
       '<label>' + esc(t('contact')) + '</label><input type="text" id="f-contact" value="' + esc(v ? v.contact : '') + '">' +
       '<label>' + esc(t('products')) + '</label><input type="text" id="f-products" value="' + esc(v ? v.products : '') + '">' +
       '<label>' + esc(t('samples')) + '</label><input type="text" id="f-samples" value="' + esc(v ? v.samples : '') + '">' +
@@ -155,7 +154,7 @@
   });
   $('sheet-body').addEventListener('change', function (e) {
     if (e.target.id !== 'photo-in' || !e.target.files[0]) return; var p = S.byId[S.sel], f = e.target.files[0]; if (!p) return; toast(t('uploading'), 6000);
-    shrink(f).then(function (data) { return API.addPhoto(S.code, p.id, data, localStorage.getItem('mzk_rep') || ''); }).then(function () { toast(t('saved')); loadPhotos(p.id); }).catch(function (err) { toast(err && err.bad ? t('gate_bad') : t('gate_net')); });
+    shrink(f).then(function (data) { return API.addPhoto(S.code, p.id, data, ''); }).then(function () { toast(t('saved')); loadPhotos(p.id); }).catch(function (err) { toast(err && err.bad ? t('gate_bad') : t('gate_net')); });
     e.target.value = '';
   });
   function shrink(file) {
@@ -175,12 +174,11 @@
     if (!e.target.closest('#vform')) return; clearTimeout(autoTimer);
     autoTimer = setTimeout(function () { var p = S.byId[S.sel]; if (!p || stOf(p.id) === 'none') return; setStatus(p, stOf(p.id), true); }, 900);
   });
-  function formVals() { var g = function (i) { var e = $(i); return e ? e.value.trim() : ''; }; return { rep: g('f-rep'), contact: g('f-contact'), products: g('f-products'), samples: g('f-samples'), notes: g('f-notes'), follow_up: g('f-follow') }; }
+  function formVals() { var g = function (i) { var e = $(i); return e ? e.value.trim() : ''; }; return { contact: g('f-contact'), products: g('f-products'), samples: g('f-samples'), notes: g('f-notes'), follow_up: g('f-follow') }; }
   function setStatus(p, status, quiet) {
-    var f = formVals(); if (f.rep) save('mzk_rep', f.rep);
+    var f = formVals();
     var old = S.visits[p.id] || {};
     var payload = Object.assign({ place_id: p.id, status: status, name: p.name, lat: p.lat, lon: p.lon, tags: p.cats, phone: p.phone, addr: p.addr }, f);
-    if (!$('vform')) payload = Object.assign(payload, { rep: old.rep || localStorage.getItem('mzk_rep') || '' });
     S.visits[p.id] = Object.assign({}, old, payload, { visited_at: old.visited_at || new Date().toISOString(), updated_at: new Date().toISOString() });
     recolor(p.id); if (!quiet) { renderSheet(); loadHistory(p.id); loadPhotos(p.id); } renderDrawer();
     send('saveVisit', [payload], function () { toast(t('saved'), 1200); });
@@ -189,7 +187,7 @@
   function loadHistory(id) {
     API.getLog(S.code, id).then(function (rows) {
       var box = $('hist'); if (!box || S.sel !== id) return;
-      box.innerHTML = rows.length ? rows.map(function (r) { return '<div><span class="dt">' + esc(fmt(r.at, true)) + '</span><span class="t"><b>' + esc(t('st_' + r.status)) + '</b>' + (r.rep ? ' · ' + esc(r.rep) : '') + (r.note && r.note !== 'reset' ? ' — ' + esc(r.note) : '') + '</span></div>'; }).join('') : '<div class="t">' + esc(t('no_history')) + '</div>';
+      box.innerHTML = rows.length ? rows.map(function (r) { return '<div><span class="dt">' + esc(fmt(r.at, true)) + '</span><span class="t"><b>' + esc(t('st_' + r.status)) + '</b>' + (r.note && r.note !== 'reset' ? ' — ' + esc(r.note) : '') + '</span></div>'; }).join('') : '<div class="t">' + esc(t('no_history')) + '</div>';
     }).catch(function () {});
   }
 
@@ -265,7 +263,7 @@
       var list = all.filter(function (v) { return S.vfilter === 'all' || v.status === S.vfilter; });
       h += list.length ? list.map(function (v) {
         var p = S.byId[v.place_id] || { name: v.name || v.place_id, cats: v.tags || '', addr: v.addr || '' };
-        return '<div class="vitem" style="border-left-color:' + STC[v.status] + '" data-id="' + esc(v.place_id) + '"><div class="nm">' + esc(p.name) + '</div><div class="meta">' + STI[v.status] + ' ' + esc(t('st_' + v.status)) + ' · ' + esc(fmt(v.visited_at, true)) + (v.rep ? ' · ' + esc(v.rep) : '') + '</div>' +
+        return '<div class="vitem" style="border-left-color:' + STC[v.status] + '" data-id="' + esc(v.place_id) + '"><div class="nm">' + esc(p.name) + '</div><div class="meta">' + STI[v.status] + ' ' + esc(t('st_' + v.status)) + ' · ' + esc(fmt(v.visited_at, true)) + '</div>' +
           '<div class="meta">' + esc(catLabel(p.cats || '')) + (p.addr ? ' · ' + esc(p.addr) : '') + '</div>' + (v.contact ? '<div class="meta">' + esc(t('contact')) + ': ' + esc(v.contact) + '</div>' : '') +
           (v.products ? '<div class="meta">' + esc(t('products')) + ': ' + esc(v.products) + '</div>' : '') + (v.samples ? '<div class="meta">' + esc(t('samples')) + ': ' + esc(v.samples) + '</div>' : '') +
           (v.notes ? '<div class="nt">' + esc(v.notes) + '</div>' : '') + (v.follow_up ? '<div class="meta">📅 ' + esc(t('follow_up')) + ': ' + esc(fmt(v.follow_up)) + '</div>' : '') + '</div>';
@@ -280,7 +278,6 @@
     } else {
       var pref = localStorage.getItem('mzk_dir') || 'ask';
       h += '<div class="panel-h t">' + esc(t('set_dir')) + '</div><div class="opt">' + [['ask', 'ask_each'], ['apple', 'apple'], ['google', 'google']].map(function (o) { return '<button class="t' + (pref === o[0] ? ' on' : '') + '" data-dp="' + o[0] + '">' + esc(t(o[1])) + '</button>'; }).join('') + '</div>' +
-        '<div class="panel-h t">' + esc(t('set_rep')) + '</div><div class="form drawer-form"><input type="text" id="s-rep" value="' + esc(localStorage.getItem('mzk_rep') || '') + '"></div>' +
         '<div class="panel-h t">' + esc(t('lang')) + '</div><div class="opt"><button data-sl="ar"' + (S.lang === 'ar' ? ' class="on"' : '') + '>العربية</button><button data-sl="tr"' + (S.lang === 'tr' ? ' class="on"' : '') + '>Türkçe</button></div>' +
         '<div class="hint">' + esc(t('sources')) + '</div><div class="hint">' + (window.PLACES_META ? window.PLACES_META.total + ' ' + esc(t('n_places')) : '') + '</div><div class="acts"><button class="btn ghost t" id="s-out">' + esc(t('logout')) + '</button></div>';
     }
@@ -296,7 +293,6 @@
     var sl = e.target.closest('[data-sl]'); if (sl) return setLang(sl.getAttribute('data-sl'));
     if (e.target.closest('#s-out')) return logout();
   });
-  $('drawer-body').addEventListener('input', function (e) { if (e.target.id === 's-rep') save('mzk_rep', e.target.value.trim()); });
 
   /* ---------------- add a missing place ---------------- */
   function startAdd() {
@@ -307,7 +303,7 @@
   }
   $('pin-cancel').addEventListener('click', function () { $('pin').hidden = true; openDrawer(); });
   $('pin-save').addEventListener('click', function () {
-    var c = map.getCenter(), d = S.draft, p = { name: d.name, tags: d.tags, phone: d.phone, addr: d.addr, hours: d.hours, web: d.web, lat: +c.lat.toFixed(6), lon: +c.lng.toFixed(6), by: localStorage.getItem('mzk_rep') || '' };
+    var c = map.getCenter(), d = S.draft, p = { name: d.name, tags: d.tags, phone: d.phone, addr: d.addr, hours: d.hours, web: d.web, lat: +c.lat.toFixed(6), lon: +c.lng.toFixed(6), by: '' };
     $('pin').hidden = true;
     API.addPlace(S.code, p).then(function (r) {
       S.extras.push(r); S.draft = {}; buildPlaces(); renderChips(); S.filter = 'all'; renderMarkers(); toast(t('place_added')); focusPlace(S.byId[r.id], true);
@@ -330,10 +326,10 @@
   }
   function reportHtml(rows, print) {
     var c = { done: 0, pending: 0, refused: 0 }; rows.forEach(function (v) { c[v.status]++; });
-    var pct = rows.length ? Math.round(c.done * 100 / rows.length) : 0, reps = {}; rows.forEach(function (v) { if (v.rep) reps[v.rep] = 1; });
+    var pct = rows.length ? Math.round(c.done * 100 / rows.length) : 0;
     var byc = {}; rows.forEach(function (v) { var tg = (v.tags || ''); var key = tg ? tg.charAt(0) : '?'; (byc[key] = byc[key] || { n: 0, done: 0, pending: 0, refused: 0 }); byc[key].n++; byc[key][v.status]++; });
     var h = '<div class="hd"><div><h1>' + esc(TR.title) + '</h1><div class="co">' + esc(TR.company) + '</div><div class="sb">' + esc(TR.sub) + '</div></div><img src="assets/logo-colored.png" alt=""></div>' +
-      '<div class="meta">' + esc(TR.created) + ': <b>' + esc(fmt(new Date(), true)) + '</b>' + (Object.keys(reps).length ? '<br>' + esc(TR.rep) + ': <b>' + esc(Object.keys(reps).join(', ')) + '</b>' : '') + '</div>' +
+      '<div class="meta">' + esc(TR.created) + ': <b>' + esc(fmt(new Date(), true)) + '</b>' + '</div>' +
       '<h2>' + esc(TR.summary) + '</h2><div class="kp"><div><b>' + rows.length + '</b><span>' + esc(TR.total) + '</span></div><div><b style="color:#2f9e57">' + c.done + '</b><span>' + esc(TR.done) + '</span></div><div><b style="color:#b36b00">' + c.pending + '</b><span>' + esc(TR.pending) + '</span></div><div><b style="color:#c4161c">' + c.refused + '</b><span>' + esc(TR.refused) + '</span></div><div><b>%' + pct + '</b><span>' + esc(TR.conv) + '</span></div></div>';
     if (!rows.length) return h + '<p>' + esc(TR.none) + '</p><div class="ft">' + esc(TR.src) + '</div>';
     h += '<h2>' + esc(TR.by_cat) + '</h2><table class="cat"><tr><th>' + esc(TR.cat) + '</th><th>' + esc(TR.visits) + '</th><th>' + esc(TR.st.done) + '</th><th>' + esc(TR.st.pending) + '</th><th>' + esc(TR.st.refused) + '</th></tr>' +
@@ -341,22 +337,22 @@
       '<h2>' + esc(TR.list) + '</h2>';
     function F(v) { var p = S.byId[v.place_id] || {}; return { name: v.name || p.name || '', cat: catTR(v.tags || p.cats), addr: fullAddr(p, v.addr), phone: v.phone || p.phone || '' }; }
     if (print) {
-      h += '<table class="lst"><colgroup><col style="width:7%"><col style="width:10%"><col style="width:7%"><col style="width:15%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:9%"><col style="width:8%"><col style="width:11%"><col style="width:5%"><col style="width:5%"></colgroup><thead><tr><th>' + [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.note || TR.notes, TR.follow, TR.rep].map(esc).join('</th><th>') + '</th></tr></thead>' +
-        rows.map(function (v) { var f = F(v); return '<tr><td>' + esc(fmt(v.visited_at, true)) + '</td><td><b>' + esc(f.name) + '</b></td><td>' + esc(f.cat) + '</td><td>' + esc(f.addr) + '</td><td>' + esc(f.phone) + '</td><td class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</td><td>' + esc(v.contact || '') + '</td><td>' + esc(v.products || '') + '</td><td>' + esc(v.samples || '') + '</td><td>' + esc(v.notes || '') + '</td><td>' + esc(fmt(v.follow_up)) + '</td><td>' + esc(v.rep || '') + '</td></tr>'; }).join('') + '</table>';
+      h += '<table class="lst"><colgroup><col style="width:7%"><col style="width:11%"><col style="width:7%"><col style="width:15%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:9%"><col style="width:8%"><col style="width:14%"><col style="width:6%"></colgroup><thead><tr><th>' + [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.note || TR.notes, TR.follow].map(esc).join('</th><th>') + '</th></tr></thead>' +
+        rows.map(function (v) { var f = F(v); return '<tr><td>' + esc(fmt(v.visited_at, true)) + '</td><td><b>' + esc(f.name) + '</b></td><td>' + esc(f.cat) + '</td><td>' + esc(f.addr) + '</td><td>' + esc(f.phone) + '</td><td class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</td><td>' + esc(v.contact || '') + '</td><td>' + esc(v.products || '') + '</td><td>' + esc(v.samples || '') + '</td><td>' + esc(v.notes || '') + '</td><td>' + esc(fmt(v.follow_up)) + '</td></tr>'; }).join('') + '</table>';
     } else {
       h += rows.map(function (v) {
         var f = F(v);
         function L(k, val) { return val ? '<div class="vl"><i>' + esc(k) + '</i><span>' + esc(val) + '</span></div>' : ''; }
         return '<div class="vc b-' + v.status + '"><div class="vh"><b>' + esc(f.name) + '</b><em class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</em></div>' +
-          L(TR.date, fmt(v.visited_at, true)) + L(TR.cat, f.cat) + L(TR.addr, f.addr) + L(TR.phone, f.phone) + L(TR.contact, v.contact) + L(TR.products, v.products) + L(TR.samples, v.samples) + L(TR.note || TR.notes, v.notes) + L(TR.follow, fmt(v.follow_up)) + L(TR.rep, v.rep) + '</div>';
+          L(TR.date, fmt(v.visited_at, true)) + L(TR.cat, f.cat) + L(TR.addr, f.addr) + L(TR.phone, f.phone) + L(TR.contact, v.contact) + L(TR.products, v.products) + L(TR.samples, v.samples) + L(TR.note || TR.notes, v.notes) + L(TR.follow, fmt(v.follow_up)) + '</div>';
       }).join('');
     }
     return h + '<div class="ft">' + esc(TR.src) + '</div>';
   }
   function downloadCsv(rows) {
-    var head = [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.notes, TR.follow, TR.rep];
+    var head = [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.notes, TR.follow];
     var q = function (s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; };
-    var lines = [head.map(q).join(';')].concat(rows.map(function (v) { var p = S.byId[v.place_id] || {}; return [fmt(v.visited_at, true), v.name || p.name, catTR(v.tags || p.cats), v.addr || p.addr, v.phone || p.phone, TR.st[v.status], v.contact, v.products, v.samples, v.notes, fmt(v.follow_up), v.rep].map(q).join(';'); }));
+    var lines = [head.map(q).join(';')].concat(rows.map(function (v) { var p = S.byId[v.place_id] || {}; return [fmt(v.visited_at, true), v.name || p.name, catTR(v.tags || p.cats), v.addr || p.addr, v.phone || p.phone, TR.st[v.status], v.contact, v.products, v.samples, v.notes, fmt(v.follow_up)].map(q).join(';'); }));
     var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'Mozaik-ziyaret-raporu-' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); a.remove();
   }
@@ -399,12 +395,6 @@
     $('gate').hidden = true; $('app').hidden = false; $('demo-bar').hidden = true;
     if (!entered) { entered = true; initMap(); }
     buildPlaces(); renderChips(); renderMarkers(); applyLang(); persistQueue(); setTimeout(function () { map.invalidateSize(); }, 50); flush();
-  }
-  function askName() {
-    if (localStorage.getItem('mzk_rep')) return;
-    modal('<div class="modal-title t">' + esc(t('who_title')) + '</div><div class="hint2 t">' + esc(t('who_hint')) + '</div><div class="form"><input type="text" id="who" autocomplete="name"><div class="acts"><button class="btn gold t" id="who-ok">' + esc(t('save')) + '</button></div></div>', function (e) {
-      if (!e.target.closest('#who-ok')) return; var v = $('who').value.trim(); if (!v) return; save('mzk_rep', v); closeModal(); toast(t('saved'), 1200);
-    });
   }
   $('enter').addEventListener('click', function () { var c = $('code').value.trim(); if (!c) return; $('gate-msg').textContent = ''; $('enter').disabled = true; tryCode(c, false).then(function () { $('enter').disabled = false; }); });
   $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('enter').click(); });
