@@ -1,7 +1,8 @@
 /* Backend layer. Production: Supabase functions (sm_*) that check the access code on the SERVER. No config -> local demo store on this device only. */
 (function () {
   'use strict';
-  var CFG = window.MZK_CONFIG || {}, DEMO = !CFG.SUPABASE_URL;
+  var CFG = window.MZK_CONFIG || {}, LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname), DEMO = !CFG.SUPABASE_URL && LOCAL;
+  /* production never falls back to a device-only store: without the server config every call fails loudly */
   function rpc(fn, body) {
     return fetch(CFG.SUPABASE_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.SUPABASE_KEY }, body: JSON.stringify(body) })
       .then(function (r) {
@@ -10,7 +11,10 @@
       });
   }
   var API;
-  if (!DEMO) {
+  if (!DEMO && !CFG.SUPABASE_URL) {
+    var NO = function () { return Promise.reject(new Error('no server config')); };
+    API = { demo: false, check: NO, getAll: NO, saveVisit: NO, clearVisit: NO, getLog: NO, addPlace: NO, updatePlace: NO, addPhoto: NO, getPhotos: NO, deletePhoto: NO };
+  } else if (!DEMO) {
     API = {
       demo: false,
       check: function (c) { return rpc('sm_check', { p_code: c }); },

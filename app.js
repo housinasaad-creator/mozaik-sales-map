@@ -378,7 +378,7 @@
   function loadAll() { return API.getAll(S.code).then(function (d) { save('mzk_cache', d); applyState(d); lastSig = sig(d); }); }
   var entered = false;
   function enter() {
-    $('gate').hidden = true; $('app').hidden = false; $('demo-bar').hidden = !API.demo;
+    $('gate').hidden = true; $('app').hidden = false; $('demo-bar').hidden = true;
     if (!entered) { entered = true; initMap(); }
     buildPlaces(); renderChips(); renderMarkers(); applyLang(); persistQueue(); setTimeout(function () { map.invalidateSize(); }, 50); flush();
   }
