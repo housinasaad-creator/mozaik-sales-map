@@ -117,6 +117,7 @@
   }
   function closeSheet() { S.sel = null; $('sheet').hidden = true; if (selRing) { map.removeLayer(selRing); selRing = null; } }
   $('sheet-x').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
   function row(k, v) { return '<div class="row"><div class="k t">' + esc(t(k)) + '</div><div class="v">' + v + '</div></div>'; }
   function renderSheet() {
     var p = S.byId[S.sel]; if (!p) return; var v = S.visits[p.id], st = v ? v.status : 'none';
