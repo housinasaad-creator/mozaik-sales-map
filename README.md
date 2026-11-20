@@ -5,6 +5,6 @@ Visit results (deal / pending / refused), notes, photos and a Turkish management
 Access is protected by a team code that is checked on the server (Supabase).
 
 ## Data sources
-- Place data: © OpenStreetMap contributors (ODbL) and Overture Maps Foundation (CDLA-Permissive-2.0).
+- Place data and addresses: © OpenStreetMap contributors (ODbL) and Overture Maps Foundation places + divisions (CDLA-Permissive-2.0).
 - Map tiles: © OpenStreetMap contributors.
 - Libraries: Leaflet (BSD-2), Leaflet.markercluster (MIT).

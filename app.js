@@ -44,8 +44,8 @@
   /* ---------------- map ---------------- */
   var map, cluster, markers = {}, selRing, meDot;
   function initMap() {
-    map = L.map('map', { zoomControl: false, preferCanvas: true, tap: true }).setView([37.066, 37.383], 12);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors · Overture Maps' }).addTo(map);
+    map = L.map('map', { zoomControl: false, preferCanvas: true, tap: true, minZoom: 12, maxBounds: [[36.935, 37.202], [37.219, 37.552]], maxBoundsViscosity: 1.0 }).setView([37.066, 37.383], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 12, maxZoom: 19, bounds: [[36.935, 37.202], [37.219, 37.552]], attribution: '© OpenStreetMap contributors · Overture Maps' }).addTo(map);
     L.control.zoom({ position: 'topleft' }).addTo(map);
     cluster = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 44, disableClusteringAtZoom: 17, showCoverageOnHover: false, spiderfyOnMaxZoom: true });
     window.__mzk = { map: map, cluster: cluster, markers: markers, labels: function () { updateLabels(); return labeled; } };
@@ -113,7 +113,7 @@
     S.sel = id; var p = S.byId[id]; if (!p) return;
     if (selRing) map.removeLayer(selRing);
     selRing = L.circleMarker([p.lat, p.lon], { radius: 17, color: '#c9a659', weight: 4, fill: false, interactive: false }).addTo(map);
-    $('sheet').hidden = false; renderSheet(); $('sheet').scrollTop = 0; loadHistory(id); loadPhotos(id);
+    $('sheet').hidden = false; renderSheet(); $('sheet-body').scrollTop = 0; loadHistory(id); loadPhotos(id);
   }
   function closeSheet() { S.sel = null; $('sheet').hidden = true; if (selRing) { map.removeLayer(selRing); selRing = null; } }
   $('sheet-x').addEventListener('click', closeSheet);
@@ -123,7 +123,7 @@
     var p = S.byId[S.sel]; if (!p) return; var v = S.visits[p.id], st = v ? v.status : 'none';
     var h = '<div class="pn t">' + esc(p.name) + '</div><div class="tags">' + p.cats.split('').map(function (c) { return '<span class="tag t">' + esc(t('c_' + c)) + '</span>'; }).join('') + '<span class="badge t" style="background:' + STC[st] + '">' + esc(t('st_' + st)) + '</span></div>';
     var tel = p.phone ? '<a class="ltr" href="tel:' + esc(p.phone.replace(/[^+\d]/g, '')) + '">' + esc(p.phone) + '</a>' : '<span class="t">' + esc(t('no_info')) + '</span>';
-    h += row('address', '<span class="t">' + (p.addr ? esc(p.addr) : esc(t('no_info'))) + '</span>') + row('phone', tel) + row('hours', '<span class="ltr">' + (p.hours ? esc(p.hours) : '') + '</span>' + (p.hours ? '' : '<span class="t">' + esc(t('no_info')) + '</span>'));
+    h += row('address', '<span class="t">' + (p.addr ? esc(p.addr) : esc(t('no_info'))) + '</span>') + row('phone', tel);
     if (p.web) h += row('website', '<a class="ltr" target="_blank" rel="noopener" href="' + esc(/^https?:/.test(p.web) ? p.web : 'https://' + p.web) + '">' + esc(p.web.replace(/^https?:\/\//, '')) + '</a>');
     if (v) h += '<div class="hint2 t">' + esc(t('last_save')) + ': ' + esc((v.rep || '—') + ' · ' + fmt(v.updated_at, true)) + '</div>';
     h += '<div class="acts"><button class="btn gold t" id="b-dir">🧭 ' + esc(t('directions')) + '</button>' + (p.phone ? '<button class="btn navy t" id="b-call">📞 ' + esc(t('call')) + '</button>' : '') + '</div>';
@@ -220,11 +220,11 @@
   function editInfo(p) {
     modal('<div class="modal-title t">' + esc(t('edit_title')) + '</div><div class="form"><label>' + esc(t('name')) + '</label><input type="text" id="e-name" value="' + esc(p.name) + '">' +
       '<label>' + esc(t('phone')) + '</label><input type="tel" id="e-phone" value="' + esc(p.phone) + '"><label>' + esc(t('address')) + '</label><input type="text" id="e-addr" value="' + esc(p.addr) + '">' +
-      '<label>' + esc(t('hours')) + '</label><input type="text" id="e-hours" value="' + esc(p.hours) + '"><label>' + esc(t('website')) + '</label><input type="url" id="e-web" value="' + esc(p.web) + '">' +
+      '<label>' + esc(t('website')) + '</label><input type="url" id="e-web" value="' + esc(p.web) + '">' +
       '<div class="chk" style="margin-top:12px"><label><input type="checkbox" id="e-hide"> <span class="t">' + esc(t('hide_place')) + '</span></label></div>' +
       '<div class="acts"><button class="btn gold t" id="e-save">' + esc(t('save')) + '</button></div></div>', function (e) {
       if (!e.target.closest('#e-save')) return;
-      var u = { place_id: p.id, name: $('e-name').value.trim(), phone: $('e-phone').value.trim(), addr: $('e-addr').value.trim(), hours: $('e-hours').value.trim(), web: $('e-web').value.trim(), hidden: $('e-hide').checked };
+      var u = { place_id: p.id, name: $('e-name').value.trim(), phone: $('e-phone').value.trim(), addr: $('e-addr').value.trim(), hours: '', web: $('e-web').value.trim(), hidden: $('e-hide').checked };
       if (p.id.indexOf('x:') === 0) { /* manual place: update in place */ var ex = S.extras.filter(function (x) { return x.id === p.id; })[0]; if (ex) { ex.name = u.name || ex.name; ex.phone = u.phone; ex.addr = u.addr; ex.hours = u.hours; ex.web = u.web; if (u.hidden) S.extras = S.extras.filter(function (x) { return x.id !== p.id; }); } }
       else S.overrides[p.id] = u;
       send('updatePlace', [u], function () { toast(t('saved')); });
@@ -253,7 +253,7 @@
   function openDrawer() { $('drawer').hidden = false; $('scrim').hidden = false; renderTabs(); renderDrawer(); }
   function closeDrawer() { $('drawer').hidden = true; $('scrim').hidden = true; }
   $('menu-btn').addEventListener('click', openDrawer); $('drawer-x').addEventListener('click', closeDrawer); $('scrim').addEventListener('click', closeDrawer);
-  function renderTabs() { $('tabs').innerHTML = [['visits', 'm_visits'], ['report', 'm_report'], ['add', 'm_add'], ['settings', 'm_settings']].map(function (x) { return '<button data-tab="' + x[0] + '"' + (S.tab === x[0] ? ' class="on"' : '') + '>' + esc(t(x[1])) + '</button>'; }).join(''); }
+  function renderTabs() { $('tabs').innerHTML = [['visits', 'm_visits'], ['report', 'm_report'], ['settings', 'm_settings']].map(function (x) { return '<button data-tab="' + x[0] + '"' + (S.tab === x[0] ? ' class="on"' : '') + '>' + esc(t(x[1])) + '</button>'; }).join(''); }
   $('tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.tab = b.getAttribute('data-tab'); renderTabs(); renderDrawer(); });
   function visitList() { return Object.keys(S.visits).map(function (k) { return S.visits[k]; }).sort(function (a, b) { return String(b.updated_at).localeCompare(String(a.updated_at)); }); }
   function renderDrawer() {
@@ -271,13 +271,11 @@
           (v.notes ? '<div class="nt">' + esc(v.notes) + '</div>' : '') + (v.follow_up ? '<div class="meta">📅 ' + esc(t('follow_up')) + ': ' + esc(fmt(v.follow_up)) + '</div>' : '') + '</div>';
       }).join('') : '<div class="hint">' + esc(t('none_yet')) + '</div>';
     } else if (S.tab === 'report') {
-      var vs = visitList(), dmin = vs.length ? vs[vs.length - 1].visited_at : new Date().toISOString(), today = new Date().toISOString().slice(0, 10);
-      h += '<div class="hint">' + esc(t('report_hint')) + '</div><div class="form drawer-form"><label>' + esc(t('from')) + '</label><input type="date" id="r-from" value="' + esc(String(dmin).slice(0, 10)) + '"><label>' + esc(t('to')) + '</label><input type="date" id="r-to" value="' + today + '">' +
-        '<div class="acts"><button class="btn gold t" id="r-make">' + esc(t('make_report')) + '</button></div></div>';
+      h += '<div class="hint">' + esc(t('report_hint')) + '</div><div class="acts"><button class="btn gold t" id="r-make">' + esc(t('make_report')) + '</button></div>';
     } else if (S.tab === 'add') {
       var d = S.draft; h += '<div class="panel-h t">' + esc(t('add_title')) + '</div><div class="form drawer-form"><label>' + esc(t('name')) + '</label><input type="text" id="a-name" value="' + esc(d.name || '') + '"><label>' + esc(t('type')) + '</label><div class="chk">' +
         CATS.map(function (c) { return '<label><input type="checkbox" class="a-cat" value="' + c + '"' + ((d.tags || 'r').indexOf(c) >= 0 ? ' checked' : '') + '> <span class="t">' + esc(t('c_' + c)) + '</span></label>'; }).join('') + '</div>' +
-        '<label>' + esc(t('phone')) + '</label><input type="tel" id="a-phone" value="' + esc(d.phone || '') + '"><label>' + esc(t('address')) + '</label><input type="text" id="a-addr" value="' + esc(d.addr || '') + '"><label>' + esc(t('hours')) + '</label><input type="text" id="a-hours" value="' + esc(d.hours || '') + '"><label>' + esc(t('website')) + '</label><input type="url" id="a-web" value="' + esc(d.web || '') + '">' +
+        '<label>' + esc(t('phone')) + '</label><input type="tel" id="a-phone" value="' + esc(d.phone || '') + '"><label>' + esc(t('address')) + '</label><input type="text" id="a-addr" value="' + esc(d.addr || '') + '"><label>' + esc(t('website')) + '</label><input type="url" id="a-web" value="' + esc(d.web || '') + '">' +
         '<div class="acts"><button class="btn gold t" id="a-go">📍 ' + esc(t('save_place')) + '</button></div></div>';
     } else {
       var pref = localStorage.getItem('mzk_dir') || 'ask';
@@ -304,7 +302,7 @@
   function startAdd() {
     var name = $('a-name').value.trim(); if (!name) { toast(t('need_name')); return; }
     var tags = [].filter.call(document.querySelectorAll('.a-cat'), function (c) { return c.checked; }).map(function (c) { return c.value; }).join('') || 'r';
-    S.draft = { name: name, tags: tags, phone: $('a-phone').value.trim(), addr: $('a-addr').value.trim(), hours: $('a-hours').value.trim(), web: $('a-web').value.trim() };
+    S.draft = { name: name, tags: tags, phone: $('a-phone').value.trim(), addr: $('a-addr').value.trim(), hours: '', web: $('a-web').value.trim() };
     closeDrawer(); closeSheet(); $('pin').hidden = false;
   }
   $('pin-cancel').addEventListener('click', function () { $('pin').hidden = true; openDrawer(); });
@@ -317,34 +315,45 @@
   });
 
   /* ---------------- Turkish management report ---------------- */
-  function reportData(from, to) {
-    var a = from ? new Date(from + 'T00:00:00') : new Date(0), b = to ? new Date(to + 'T23:59:59') : new Date();
-    return visitList().filter(function (v) { var d = new Date(v.visited_at); return d >= a && d <= b; }).sort(function (x, y) { return String(x.visited_at).localeCompare(String(y.visited_at)); });
+  function reportData() {
+    return visitList().slice().sort(function (x, y) { return String(x.visited_at).localeCompare(String(y.visited_at)); });
   }
+  function fullAddr(p, override) { return override || (p && p.addr) || ''; }
   function catTR(c) { return (c || '').split('').map(function (x) { return TR.cats[x]; }).filter(Boolean).join(' / '); }
   function makeReport() {
-    var from = $('r-from').value, to = $('r-to').value, rows = reportData(from, to); S.report = { from: from, to: to, rows: rows };
-    var html = reportHtml(from, to, rows);
-    modal('<div class="modal-title t">' + esc(t('report_title')) + '</div><div class="acts"><button class="btn gold t" id="rp-print">🖨️ ' + esc(t('print')) + '</button><button class="btn navy t" id="rp-csv">📊 ' + esc(t('csv')) + '</button></div><div class="rp" style="background:#fff;padding:12px;border-radius:12px;overflow-x:auto">' + html + '</div>', function (e) {
-      if (e.target.closest('#rp-print')) { $('print-area').innerHTML = '<div class="rp">' + html + '</div>'; setTimeout(function () { window.print(); }, 60); }
-      if (e.target.closest('#rp-csv')) downloadCsv(rows, from, to);
+    var rows = reportData(); S.report = { rows: rows };
+    var screenHtml = reportHtml(rows, false), printHtml = reportHtml(rows, true);
+    modal('<div class="modal-title t">' + esc(t('report_title')) + '</div><div class="acts"><button class="btn gold t" id="rp-print">🖨️ ' + esc(t('print')) + '</button><button class="btn navy t" id="rp-csv">📊 ' + esc(t('csv')) + '</button></div><div class="rp scr">' + screenHtml + '</div>', function (e) {
+      if (e.target.closest('#rp-print')) { $('print-area').innerHTML = '<div class="rp prn">' + printHtml + '</div>'; setTimeout(function () { window.print(); }, 60); }
+      if (e.target.closest('#rp-csv')) downloadCsv(rows);
     }, true);
   }
-  function reportHtml(from, to, rows) {
+  function reportHtml(rows, print) {
     var c = { done: 0, pending: 0, refused: 0 }; rows.forEach(function (v) { c[v.status]++; });
     var pct = rows.length ? Math.round(c.done * 100 / rows.length) : 0, reps = {}; rows.forEach(function (v) { if (v.rep) reps[v.rep] = 1; });
     var byc = {}; rows.forEach(function (v) { var tg = (v.tags || ''); var key = tg ? tg.charAt(0) : '?'; (byc[key] = byc[key] || { n: 0, done: 0, pending: 0, refused: 0 }); byc[key].n++; byc[key][v.status]++; });
-    var h = '<div class="hd"><div><h1>' + esc(TR.title) + '</h1><div>' + esc(TR.company) + '</div><div style="color:#555;font-size:12px">' + esc(TR.sub) + '</div></div><img src="assets/logo-colored.png" alt=""></div>' +
-      '<div style="font-size:12px;color:#333">' + esc(TR.period) + ': <b>' + esc(fmt(from) || '-') + ' – ' + esc(fmt(to) || '-') + '</b> &nbsp;|&nbsp; ' + esc(TR.created) + ': ' + esc(fmt(new Date(), true)) + (Object.keys(reps).length ? ' &nbsp;|&nbsp; ' + esc(TR.rep) + ': ' + esc(Object.keys(reps).join(', ')) : '') + '</div>' +
+    var h = '<div class="hd"><div><h1>' + esc(TR.title) + '</h1><div class="co">' + esc(TR.company) + '</div><div class="sb">' + esc(TR.sub) + '</div></div><img src="assets/logo-colored.png" alt=""></div>' +
+      '<div class="meta">' + esc(TR.created) + ': <b>' + esc(fmt(new Date(), true)) + '</b>' + (Object.keys(reps).length ? '<br>' + esc(TR.rep) + ': <b>' + esc(Object.keys(reps).join(', ')) + '</b>' : '') + '</div>' +
       '<h2>' + esc(TR.summary) + '</h2><div class="kp"><div><b>' + rows.length + '</b><span>' + esc(TR.total) + '</span></div><div><b style="color:#2f9e57">' + c.done + '</b><span>' + esc(TR.done) + '</span></div><div><b style="color:#b36b00">' + c.pending + '</b><span>' + esc(TR.pending) + '</span></div><div><b style="color:#c4161c">' + c.refused + '</b><span>' + esc(TR.refused) + '</span></div><div><b>%' + pct + '</b><span>' + esc(TR.conv) + '</span></div></div>';
     if (!rows.length) return h + '<p>' + esc(TR.none) + '</p><div class="ft">' + esc(TR.src) + '</div>';
-    h += '<h2>' + esc(TR.by_cat) + '</h2><table><tr><th>' + esc(TR.cat) + '</th><th>' + esc(TR.visits) + '</th><th>' + esc(TR.st.done) + '</th><th>' + esc(TR.st.pending) + '</th><th>' + esc(TR.st.refused) + '</th></tr>' +
+    h += '<h2>' + esc(TR.by_cat) + '</h2><table class="cat"><tr><th>' + esc(TR.cat) + '</th><th>' + esc(TR.visits) + '</th><th>' + esc(TR.st.done) + '</th><th>' + esc(TR.st.pending) + '</th><th>' + esc(TR.st.refused) + '</th></tr>' +
       Object.keys(byc).map(function (k) { var x = byc[k]; return '<tr><td>' + esc(TR.cats[k] || '-') + '</td><td>' + x.n + '</td><td>' + x.done + '</td><td>' + x.pending + '</td><td>' + x.refused + '</td></tr>'; }).join('') + '</table>' +
-      '<h2>' + esc(TR.list) + '</h2><table><tr><th>' + [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.note || TR.notes, TR.follow, TR.rep].map(esc).join('</th><th>') + '</th></tr>' +
-      rows.map(function (v) { var p = S.byId[v.place_id] || {}; return '<tr><td>' + esc(fmt(v.visited_at, true)) + '</td><td><b>' + esc(v.name || p.name || '') + '</b></td><td>' + esc(catTR(v.tags || p.cats)) + '</td><td>' + esc(v.addr || p.addr || '') + '</td><td>' + esc(v.phone || p.phone || '') + '</td><td class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</td><td>' + esc(v.contact || '') + '</td><td>' + esc(v.products || '') + '</td><td>' + esc(v.samples || '') + '</td><td>' + esc(v.notes || '') + '</td><td>' + esc(fmt(v.follow_up)) + '</td><td>' + esc(v.rep || '') + '</td></tr>'; }).join('') + '</table><div class="ft">' + esc(TR.src) + '</div>';
-    return h;
+      '<h2>' + esc(TR.list) + '</h2>';
+    function F(v) { var p = S.byId[v.place_id] || {}; return { name: v.name || p.name || '', cat: catTR(v.tags || p.cats), addr: fullAddr(p, v.addr), phone: v.phone || p.phone || '' }; }
+    if (print) {
+      h += '<table class="lst"><colgroup><col style="width:7%"><col style="width:10%"><col style="width:7%"><col style="width:15%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:9%"><col style="width:8%"><col style="width:11%"><col style="width:5%"><col style="width:5%"></colgroup><thead><tr><th>' + [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.note || TR.notes, TR.follow, TR.rep].map(esc).join('</th><th>') + '</th></tr></thead>' +
+        rows.map(function (v) { var f = F(v); return '<tr><td>' + esc(fmt(v.visited_at, true)) + '</td><td><b>' + esc(f.name) + '</b></td><td>' + esc(f.cat) + '</td><td>' + esc(f.addr) + '</td><td>' + esc(f.phone) + '</td><td class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</td><td>' + esc(v.contact || '') + '</td><td>' + esc(v.products || '') + '</td><td>' + esc(v.samples || '') + '</td><td>' + esc(v.notes || '') + '</td><td>' + esc(fmt(v.follow_up)) + '</td><td>' + esc(v.rep || '') + '</td></tr>'; }).join('') + '</table>';
+    } else {
+      h += rows.map(function (v) {
+        var f = F(v);
+        function L(k, val) { return val ? '<div class="vl"><i>' + esc(k) + '</i><span>' + esc(val) + '</span></div>' : ''; }
+        return '<div class="vc b-' + v.status + '"><div class="vh"><b>' + esc(f.name) + '</b><em class="s-' + v.status + '">' + esc(TR.st[v.status]) + '</em></div>' +
+          L(TR.date, fmt(v.visited_at, true)) + L(TR.cat, f.cat) + L(TR.addr, f.addr) + L(TR.phone, f.phone) + L(TR.contact, v.contact) + L(TR.products, v.products) + L(TR.samples, v.samples) + L(TR.note || TR.notes, v.notes) + L(TR.follow, fmt(v.follow_up)) + L(TR.rep, v.rep) + '</div>';
+      }).join('');
+    }
+    return h + '<div class="ft">' + esc(TR.src) + '</div>';
   }
-  function downloadCsv(rows, from, to) {
+  function downloadCsv(rows) {
     var head = [TR.date, TR.biz, TR.cat, TR.addr, TR.phone, TR.result, TR.contact, TR.products, TR.samples, TR.notes, TR.follow, TR.rep];
     var q = function (s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; };
     var lines = [head.map(q).join(';')].concat(rows.map(function (v) { var p = S.byId[v.place_id] || {}; return [fmt(v.visited_at, true), v.name || p.name, catTR(v.tags || p.cats), v.addr || p.addr, v.phone || p.phone, TR.st[v.status], v.contact, v.products, v.samples, v.notes, fmt(v.follow_up), v.rep].map(q).join(';'); }));
@@ -353,12 +362,21 @@
   }
 
   /* ---------------- locate me ---------------- */
+  var meRing, meWatch = null, GZ = L.latLngBounds([[36.935, 37.202], [37.219, 37.552]]);
+  function showMe(pos, center) {
+    var ll = [pos.coords.latitude, pos.coords.longitude], r = Math.max(10, Math.min(pos.coords.accuracy || 10, 300));
+    if (!meDot) {
+      if (!map.getPane('mepane')) { var pn = map.createPane('mepane'); pn.style.zIndex = 690; pn.style.pointerEvents = 'none'; }
+      meRing = L.circle(ll, { radius: r, color: '#1a73e8', weight: 1.5, opacity: .55, fillColor: '#1a73e8', fillOpacity: .16, interactive: false }).addTo(map);
+      meDot = L.marker(ll, { icon: L.divIcon({ className: 'me-icon', html: '<span class="me-pulse"></span><span class="me-dot"></span>', iconSize: [44, 44], iconAnchor: [22, 22] }), interactive: false, keyboard: false, pane: 'mepane' }).addTo(map);
+    } else { meRing.setLatLng(ll); meRing.setRadius(r); meDot.setLatLng(ll); }
+    if (center) { if (GZ.contains(ll)) map.setView(ll, Math.max(map.getZoom(), 17)); else toast(t('loc_out')); }
+  }
   $('locate').addEventListener('click', function () {
     if (!navigator.geolocation) return toast(t('loc_fail'));
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      var ll = [pos.coords.latitude, pos.coords.longitude]; if (meDot) map.removeLayer(meDot);
-      meDot = L.circleMarker(ll, { radius: 9, color: '#fff', weight: 3, fillColor: '#2a7de1', fillOpacity: 1, interactive: false }).addTo(map); map.setView(ll, Math.max(map.getZoom(), 16));
-    }, function () { toast(t('loc_fail')); }, { enableHighAccuracy: true, timeout: 12000 });
+    var first = true;
+    if (meWatch !== null) { navigator.geolocation.clearWatch(meWatch); meWatch = null; }
+    meWatch = navigator.geolocation.watchPosition(function (pos) { showMe(pos, first); first = false; }, function () { if (first) toast(t('loc_fail')); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
   });
 
   /* ---------------- gate / session ---------------- */
@@ -404,8 +422,23 @@
       var typing = document.activeElement && $('sheet').contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
       if (S.sel && !typing && !$('sheet').hidden) { renderSheet(); loadHistory(S.sel); loadPhotos(S.sel); }
       if (manual) toast(t('updated'), 1400);
-    }).catch(function (err) { syncing = false; if (err && err.bad) logout(); });
+    }).catch(function (err) { syncing = false; if (err && err.bad) logout(); else if (manual) toast(t('gate_net')); });
   }
+  function refreshNow() {
+    var b = $('refresh'); b.classList.add('spin'); toast(t('refreshing'), 1200);
+    flush(); sync(true).then(function () { setTimeout(function () { b.classList.remove('spin'); }, 600); }, function () { b.classList.remove('spin'); });
+  }
+  $('refresh').addEventListener('click', refreshNow);
+  /* pull down on the top bars (not the map) = refresh */
+  (function () {
+    var y0 = null, bars = [$('top'), $('chips')];
+    bars.forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; }, { passive: true });
+      el.addEventListener('touchmove', function (e) { if (y0 !== null && e.touches[0].clientY - y0 > 70) { y0 = null; refreshNow(); } }, { passive: true });
+      el.addEventListener('touchend', function () { y0 = null; }, { passive: true });
+    });
+  })();
   document.addEventListener('visibilitychange', function () { if (!document.hidden) sync(); });
   window.addEventListener('focus', function () { sync(); });
   setInterval(function () { if (!document.hidden) sync(); }, 25000);

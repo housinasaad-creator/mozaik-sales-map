@@ -168,3 +168,32 @@ h4 { margin: 16px 0 8px; color: var(--navy); font-size: 15px; }
 #sheet-bar .grip { position: absolute; left: 50%; top: 6px; width: 44px; height: 4px; margin-left: -22px; border-radius: 2px; background: rgba(12,24,54,.25); }
 #sheet-bar .xbtn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: var(--navy); color: #fff; font: 800 15px/1 -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 #sheet-bar .xbtn b { color: var(--goldL); font-size: 18px; }
+
+/* my location: Google-style blue dot with a translucent accuracy circle and a soft pulse */
+.me-icon { background: none; border: 0; }
+.me-icon .me-dot { position: absolute; left: 11px; top: 11px; width: 22px; height: 22px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(26,115,232,.5), 0 2px 8px rgba(0,0,0,.45); box-sizing: border-box; }
+.me-icon .me-pulse { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: rgba(26,115,232,.35); animation: mepulse 2s ease-out infinite; }
+@keyframes mepulse { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+
+/* place card v2: the top bar is OUTSIDE the scrolling part, so the close button can never scroll away */
+#sheet { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+#sheet-bar { position: relative; top: auto; flex: none; margin: 0; padding: 12px 12px 8px; border-radius: 22px 22px 0 0; box-shadow: 0 4px 10px -6px rgba(0,0,0,.35); }
+#sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 16px calc(var(--sab) + 18px); }
+
+/* report: phone-friendly cards on screen, fixed-width table for print */
+.rp.scr { background: #fff; padding: 14px; border-radius: 12px; overflow-wrap: anywhere; word-break: break-word; }
+.rp .hd h1 { font-size: 20px; line-height: 1.2; } .rp .hd .co { font-weight: 700; margin-top: 2px; } .rp .hd .sb { color: #555; font-size: 12px; margin-top: 2px; } .rp .hd > div { min-width: 0; flex: 1; padding-right: 10px; } .rp .hd img { flex: none; max-width: 110px; height: auto; max-height: 54px; }
+.rp .meta { font-size: 12px; color: #333; line-height: 1.7; }
+.rp.scr .kp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; } .rp.scr .kp div { min-width: 0; } .rp.scr .kp div:last-child { grid-column: 1 / -1; }
+.rp table.cat { table-layout: fixed; } .rp table.cat th, .rp table.cat td { overflow-wrap: anywhere; text-align: left; }
+.rp .vc { border: 1px solid #d8d8d8; border-left: 6px solid #999; border-radius: 10px; padding: 10px 12px; margin: 0 0 10px; background: #fff; }
+.rp .vc.b-done { border-left-color: #2f9e57; } .rp .vc.b-pending { border-left-color: #f29100; } .rp .vc.b-refused { border-left-color: #c4161c; }
+.rp .vh { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; } .rp .vh b { font-size: 15px; color: var(--navy); min-width: 0; } .rp .vh em { font-style: normal; font-size: 12px; white-space: nowrap; }
+.rp .vl { display: grid; grid-template-columns: 84px 1fr; gap: 8px; padding: 4px 0; border-top: 1px dashed #e3e3e3; font-size: 13px; line-height: 1.4; } .rp .vl i { font-style: normal; color: #666; font-size: 12px; } .rp .vl span { min-width: 0; }
+.rp.prn table.lst { table-layout: fixed; width: 100%; font-size: 9px; } .rp.prn table.lst th, .rp.prn table.lst td { overflow-wrap: anywhere; word-break: break-word; padding: 4px 4px; }
+.rp.prn .hd img { max-height: 54px; }
+
+/* refresh button above the locate button (swipe-down on the map pans it, so refresh needs its own button) */
+#refresh { bottom: calc(var(--sab) + 82px); font-size: 28px; line-height: 1; }
+#refresh.spin { animation: rspin .8s linear infinite; }
+@keyframes rspin { to { transform: rotate(360deg); } }
