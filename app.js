@@ -127,7 +127,7 @@
     if (p.web) h += row('website', '<a class="ltr" target="_blank" rel="noopener" href="' + esc(/^https?:/.test(p.web) ? p.web : 'https://' + p.web) + '">' + esc(p.web.replace(/^https?:\/\//, '')) + '</a>');
     if (v) h += '<div class="hint2 t">' + esc(t('last_save')) + ': ' + esc((v.rep || '—') + ' · ' + fmt(v.updated_at, true)) + '</div>';
     h += '<div class="acts"><button class="btn gold t" id="b-dir">🧭 ' + esc(t('directions')) + '</button>' + (p.phone ? '<button class="btn navy t" id="b-call">📞 ' + esc(t('call')) + '</button>' : '') + '</div>';
-    h += '<h4 class="t">' + esc(t('photos')) + '</h4><div class="photos" id="photos"></div><div class="acts"><label class="btn line t filebtn">📷 ' + esc(t('add_photo')) + '<input type="file" id="photo-in" accept="image/*" hidden></label><button class="btn line t" id="b-gph">🖼️ ' + esc(t('google_photos')) + '</button></div>';
+    h += '<div class="acts"><button class="btn line t" id="b-gph">🖼️ ' + esc(t('google_photos')) + '</button></div>';
     h += '<h4 class="t">' + esc(t('visit_title')) + '</h4><div class="stbtns">' + ['done', 'pending', 'refused', 'none'].map(function (s) { return '<button class="stb' + (st === s ? ' on' : '') + '" data-s="' + s + '"><span class="ic2">' + (s === 'none' ? '↩️' : STI[s]) + '</span>' + esc(t(s === 'none' ? 'btn_none' : 'st_' + s)) + '</button>'; }).join('') + '</div>';
     var showForm = !!v; var rep = (v && v.rep) || localStorage.getItem('mzk_rep') || '';
     h += '<div id="vform" class="form"' + (showForm ? '' : ' hidden') + '><h4 class="t">' + esc(t('details')) + '</h4>' +
