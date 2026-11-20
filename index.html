@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#12285a">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light only">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mozaik Harita">
+<title>Mozaik · Satış Haritası</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="vendor/mc/MarkerCluster.css">
+<link rel="stylesheet" href="app.css?v=2">
+</head>
+<body>
+
+<!-- ============ access gate ============ -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo"><img src="assets/logo-colored.png" alt="Mozaik Ofset ve Ambalaj"></div>
+    <div class="gate-title" data-i18n="gate_title"></div>
+    <input id="code" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" data-i18n-ph="gate_hint">
+    <button id="enter" class="btn gold" data-i18n="gate_btn"></button>
+    <div id="gate-msg" class="gate-msg"></div>
+    <div class="langs" data-for="gate"><button data-lang="ar">العربية</button><button data-lang="tr">Türkçe</button></div>
+  </div>
+</div>
+
+<!-- ============ app ============ -->
+<div id="app" hidden>
+  <header id="top">
+    <button id="menu-btn" class="ic" aria-label="menu"><span></span><span></span><span></span></button>
+    <img class="top-logo" src="assets/logo-white.png" alt="Mozaik">
+    <div class="search-wrap"><input id="search" type="search" autocomplete="off" data-i18n-ph="search"><div id="results"></div></div>
+    <div class="langs" data-for="top"><button data-lang="ar">ع</button><button data-lang="tr">TR</button></div>
+  </header>
+  <div id="chips"></div>
+  <div id="demo-bar" hidden data-i18n="demo"></div>
+  <div id="map"></div>
+  <button id="locate" class="fab" aria-label="locate">◎</button>
+  <div id="syncbadge" hidden></div>
+
+  <!-- place card -->
+  <section id="sheet" hidden>
+    <button id="sheet-x" class="x" aria-label="close">✕</button>
+    <div id="sheet-body"></div>
+  </section>
+
+  <!-- add-place crosshair -->
+  <div id="pin" hidden><div class="pin-shape"></div><div class="pin-bar"><span data-i18n="pick_map"></span><button id="pin-save" class="btn gold" data-i18n="save_place"></button><button id="pin-cancel" class="btn ghost" data-i18n="close"></button></div></div>
+
+  <!-- side menu (the three lines) -->
+  <aside id="drawer" hidden>
+    <div class="drawer-head"><img src="assets/logo-white.png" alt=""><button id="drawer-x" class="x light" aria-label="close">✕</button></div>
+    <nav id="tabs"></nav>
+    <div id="drawer-body"></div>
+  </aside>
+  <div id="scrim" hidden></div>
+
+  <!-- generic modal (forms, direction chooser, report) -->
+  <div id="modal" hidden><div class="modal-card"><button id="modal-x" class="x" aria-label="close">✕</button><div id="modal-body"></div></div></div>
+
+  <div id="toast" hidden></div>
+</div>
+
+<!-- printable Turkish report -->
+<div id="print-area"></div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/mc/leaflet.markercluster.js"></script>
+<script src="config.js?v=2"></script>
+<script src="i18n.js?v=2"></script>
+<script src="places.js?v=2"></script>
+<script src="api.js?v=2"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>
